@@ -21,7 +21,7 @@ parser.add_argument('-stereo', type=bool, default=True, help='use the stereo arc
 parser.add_argument('-batchsize', type=int, default=1, help='batch size (default 1')
 parser.add_argument('-epochs', type=int, default=100, help='batch size (default 100')
 parser.add_argument('-lr', type=float, default=1e-4, help='learning rate (default 1e-4')
-parser.add_argument('-stepfreq', type=int, default=50, help='how often the learning rate is adjusted (default 50')
+parser.add_argument('-stepfreq', type=int, default=15, help='how often the learning rate is adjusted (default 15')
 parser.add_argument('-gamma', type=float, default=0.5, help='step size of the LR scheduler reduction (default .5)')
 parser.add_argument('-numclass', type=int, default=11, help='number of classes in dataset (default 1)')
 args = parser.parse_args()
@@ -126,8 +126,13 @@ def train():
                 outputs = twinnet(inputs_left, inputs_right)  # pass in left and right images
             else:
                 outputs = twinnet(inputs_left)
-            flat = outputs.view(1, n_class, -1).cuda()
-            labels = labels.view(1, -1).cuda()
+
+            flat = outputs.view(1, n_class, -1)
+            labels = labels.view(1, -1)
+            if use_gpu:
+                flat = flat.cuda()
+                labels = labels.cuda()
+
 
             loss = criterion(flat, labels)
             loss.backward()
