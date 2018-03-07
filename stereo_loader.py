@@ -22,7 +22,6 @@ class StereoDataset(Dataset):
 
         # get left image
         left_image_name = os.path.join(self.root_dir, str(self.input_csv.iloc[idx, 0]))
-
         left_image = io.imread(left_image_name)
         left_image = self.subtract_mean(left_image.astype(float))
 

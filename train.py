@@ -2,7 +2,6 @@ import argparse
 import os
 import time
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
@@ -27,7 +26,7 @@ parser.add_argument('-numclass', type=int, default=11, help='number of classes i
 args = parser.parse_args()
 
 ignore_classes = torch.LongTensor([0])  # list of class numbers to ignore in training and evaluation
-means = np.array([91.49748071, 166.89248008, 123.99212699])  # training set means to center data
+means = np.array([0, 0, 0])  # training set means to center data
 root_dir = "dataset/"
 data_train_csv = os.path.join(root_dir, "train.csv")
 data_val_csv = os.path.join(root_dir, "val.csv")
@@ -176,32 +175,14 @@ def val(epoch):
         target = batch['Y'].numpy()
 
         bat, _, h, w = output.shape
-        # print(output)
-        actmap = np.squeeze(output.transpose(0, 2, 3, 1))[:, :, 0]
 
-        # target = target.transpose(0, 2, 3, 1).reshape(-1, n_class).argmax(axis=1).reshape(N, h, w)
+        actmap = np.squeeze(output.transpose(0, 2, 3, 1))[:, :, 0]
 
         pred = np.squeeze(output.transpose(0, 2, 3, 1))
 
         pred = pred.reshape(-1, n_class).argmax(axis=1)
 
         pred = pred.reshape(bat, h, w)
-
-        if iterat is 6:
-            if epoch is 0:
-                left = np.squeeze(batch['XL'].numpy()).transpose(1, 2, 0)
-                means = np.array([91.49748071, 166.89248008, 123.99212699]) / 255
-                left[:, :, 0] += means[0]
-                left[:, :, 1] += means[1]
-                left[:, :, 2] += means[2]
-                plt.imshow(np.squeeze(target), vmin=0, vmax=n_class)
-                plt.show()
-                plt.imshow(left)
-                plt.show()
-            plt.imshow(actmap)
-            plt.show()
-            plt.imshow(np.squeeze(pred), vmin=0, vmax=n_class)
-            plt.show()
 
         for p, t in zip(pred, target):
             total_ious.append(iou(p, t))
@@ -211,7 +192,7 @@ def val(epoch):
             class_accs.append(class_ind)
 
     # Calculate average IoU
-    total_ious = np.array(total_ious).T  # n_class * val_len
+    total_ious = np.array(total_ious).T
     ious = np.nanmean(total_ious, axis=1)
     pixel_accs = (np.array(pixel_correct).sum()) / (np.array(pixel_total).sum())
 
@@ -220,7 +201,6 @@ def val(epoch):
     print("Epoch:", epoch, "Pixel_acc:", pixel_accs, "MeanIoU:", np.nanmean(ious))
     print("Class Accuracies:", class_accuracies)
     print("Class IoUs:", ious)
-    # print("epoch{}, pix_acc: {}, meanIoU: {}, IoUs: {}".format(epoch, pixel_accs, np.nanmean(ious), ious))
     IU_scores[epoch] = ious
     np.save(os.path.join(score_dir, "meanIU"), IU_scores)
     pixel_scores[epoch] = pixel_accs
@@ -238,7 +218,6 @@ def iou(pred, target):
             ious.append(float('nan'))  # if there is no ground truth, do not include in evaluation
         else:
             ious.append(float(intersection) / max(union, 1))
-            # print("cls", cls, pred_inds.sum(), target_inds.sum(), intersection, float(intersection) / max(union, 1))
     return ious
 
 
